@@ -1,89 +1,5 @@
 import SwiftUI
 
-struct RevolverState {
-    var playerName: String
-    var bulletPosition: Int
-    var currentPosition: Int
-    var remainingChambers: Int
-    var fired: Bool
-    
-    var probability: Double {
-        return remainingChambers > 0 ? (1.0 / Double(remainingChambers)) * 100 : 0
-    }
-}
-
-struct PlayerNameInput: View {
-    let index: Int
-    @Binding var name: String
-    
-    var body: some View {
-        HStack {
-            Image(systemName: "person.circle")
-                .foregroundColor(.gray)
-            TextField("플레이어 이름 입력", text: $name)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-        }
-        .padding(.horizontal)
-    }
-}
-
-struct RevolverCylinder: View {
-    let revolverState: RevolverState
-    let onTrigger: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 10) {
-            Text(revolverState.playerName)
-                .font(.headline)
-                .foregroundColor(.blue)
-            
-            ZStack {
-                Circle()
-                    .fill(Color.gray.opacity(0.8))
-                    .frame(width: 120, height: 120)
-                
-                ForEach(0..<6) { index in
-                    Circle()
-                        .fill(Color.black.opacity(0.8))
-                        .frame(width: 20, height: 20)
-                        .offset(
-                            x: 40 * cos(Double(index) * .pi / 3),
-                            y: 40 * sin(Double(index) * .pi / 3)
-                        )
-                }
-                
-                Circle()
-                    .fill(Color.black.opacity(0.5))
-                    .frame(width: 30, height: 30)
-            }
-            .background(
-                Circle()
-                    .fill(revolverState.fired ? Color.red.opacity(0.3) : Color.red.opacity(0.1))
-                    .frame(width: 130, height: 130)
-            )
-            
-            Text("\(revolverState.remainingChambers)/6개의 방이 남았습니다")
-                .font(.subheadline)
-            Text("사망 확률: \(String(format: "%.2f", revolverState.probability))%")
-                .font(.subheadline)
-            
-            Button(action: onTrigger) {
-                Text("방아쇠 당기기")
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-                    .background(revolverState.fired ? Color.gray : Color.red)
-                    .cornerRadius(8)
-            }
-            .disabled(revolverState.fired)
-        }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(15)
-        .shadow(radius: 5)
-    }
-}
-
 struct ContentView: View {
     @State private var revolverStates: [RevolverState] = []
     @State private var numberOfRevolvers = 4
@@ -97,12 +13,16 @@ struct ContentView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                Text("러시안 룰렛 시뮬레이터")
+                Text("Liar's bar")
                     .font(.title)
                     .padding(.top)
                 
                 if showPlayerSetup {
-                    setupView
+                    GameSetupView(
+                        numberOfRevolvers: $numberOfRevolvers,
+                        playerNames: $playerNames,
+                        onStartGame: startGame
+                    )
                 } else {
                     gameView
                 }
@@ -114,133 +34,34 @@ struct ContentView: View {
         }
     }
     
-    var setupView: some View {
-        VStack(spacing: 20) {
-            Text("게임 설정")
-                .font(.title2)
-            
-            VStack(alignment: .leading) {
-                Text("플레이어 수")
-                    .font(.headline)
-                
-                HStack {
-                    Button(action: { if numberOfRevolvers > 1 { numberOfRevolvers -= 1 } }) {
-                        Image(systemName: "minus.circle.fill")
-                            .font(.title)
-                            .foregroundColor(.blue)
-                    }
-                    
-                    Text("\(numberOfRevolvers)")
-                        .font(.title2)
-                        .frame(width: 50)
-                    
-                    Button(action: { if numberOfRevolvers < 6 { numberOfRevolvers += 1 } }) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title)
-                            .foregroundColor(.blue)
-                    }
-                }
-            }
-            .padding()
-            
-            VStack(alignment: .leading, spacing: 15) {
-                Text("플레이어 이름")
-                    .font(.headline)
-                
-                ForEach(0..<numberOfRevolvers, id: \.self) { index in
-                    PlayerNameInput(index: index, name: $playerNames[index])
-                }
-            }
-            .padding()
-            
-            Button(action: startGame) {
-                Text("게임 시작")
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(10)
-            }
-            .padding(.horizontal)
-        }
-        .padding()
-    }
-    
     var gameView: some View {
-        VStack(spacing: 20) {
-            if showMessage {
-                Text(message)
-                    .font(.headline)
-                    .foregroundColor(message.contains("탕!") ? .red : .green)
-                    .padding()
-                    .background(Color.white)
-                    .cornerRadius(10)
-                    .shadow(radius: 2)
-            }
+        VStack(spacing: 5) {
+            CardSectionView(
+                displayCard: displayCard,
+                onDrawCard: drawRandomCard,
+                onNewGame: resetGame,
+                onResetRevolvers: resetRevolvers
+            )
             
-            // 테이블 카드 섹션
-            VStack(alignment: .leading, spacing: 10) {
-                Text("테이블 카드")
-                    .font(.headline)
-                    .padding(.horizontal)
-                
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color.white)
-                        .frame(width: 80, height: 120)
-                        .shadow(radius: 2)
-                    
-                    Text(displayCard)
-                        .font(.title)
-                }
-                
-                HStack(spacing: 10) {
-                    Button(action: drawRandomCard) {
-                        Text("무작위 카드 뽑기")
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.red)
-                            .cornerRadius(10)
-                    }
-                    .frame(maxWidth: .infinity)
-                    
-                    VStack(spacing: 8) {
-                        Button(action: resetGame) {
-                            Text("새 게임")
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.blue)
-                                .cornerRadius(10)
-                        }
-                        
-                        Button(action: resetRevolvers) {
-                            Text("리볼버 초기화")
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.green)
-                                .cornerRadius(10)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-                .padding(.horizontal)
-                
-                LazyVGrid(columns: [
-                                GridItem(.flexible()),
-                                GridItem(.flexible())
-                            ], spacing: 20) {
-                                ForEach(0..<revolverStates.count, id: \.self) { index in
-                                    RevolverCylinder(
-                                        revolverState: revolverStates[index],
-                                        onTrigger: { shootGun(at: index) }
-                                    )
-                                }
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 10) {
+                ForEach(0..<revolverStates.count, id: \.self) { index in
+                    RevolverCylinder(
+                        revolverState: revolverStates[index],
+                        onTrigger: { animationDuration in
+                            // 애니메이션이 끝난 후 결과 처리
+                            DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
+                                shootGun(at: index)
                             }
-                            .padding()
+                        },
+                        message: revolverStates[index].message,
+                        showMessage: revolverStates[index].showMessage
+                    )
+                }
             }
+            .padding()
         }
     }
     
@@ -252,7 +73,9 @@ struct ContentView: View {
                 bulletPosition: Int.random(in: 0...5),
                 currentPosition: 0,
                 remainingChambers: 6,
-                fired: false
+                fired: false,
+                message: "",
+                showMessage: false
             )
         }
         showPlayerSetup = false
@@ -262,21 +85,40 @@ struct ContentView: View {
         var state = revolverStates[index]
         
         if state.currentPosition == state.bulletPosition {
+            // 사망 시
             state.fired = true
-            message = "탕! \(state.playerName) 사망!"
+            state.addRandomRedHole()
+            state.message = "탕! \(state.playerName) 사망!"
+            state.showMessage = true
             gameOver = true
         } else {
+            // 생존 시
             state.currentPosition = (state.currentPosition + 1) % 6
             state.remainingChambers -= 1
-            message = "찰칵! \(state.playerName) 생존"
+            state.addRandomRedHole()
+            state.message = "찰칵! \(state.playerName) 생존"
+            state.showMessage = true
+            
+            // 생존한 경우에만 3초 후 메시지 숨김
+            let currentIndex = index  // 클로저에서 사용하기 위한 복사
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                if !revolverStates[currentIndex].message.contains("탕!") {
+                    var updatedState = revolverStates[currentIndex]
+                    updatedState.showMessage = false
+                    revolverStates[currentIndex] = updatedState
+                }
+            }
         }
         
         revolverStates[index] = state
-        showMessage = true
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            showMessage = false
-        }
+    }
+    
+    func resetGame() {
+        showPlayerSetup = true
+        gameOver = false
+        message = ""
+        showMessage = false
+        playerNames = Array(repeating: "", count: 10)
     }
     
     func resetRevolvers() {
@@ -286,20 +128,13 @@ struct ContentView: View {
                 bulletPosition: Int.random(in: 0...5),
                 currentPosition: 0,
                 remainingChambers: 6,
-                fired: false
+                fired: false,
+                message: "",
+                showMessage: false,
+                redHoles: []  // 빨간 구멍 초기화
             )
         }
-        message = ""
-        showMessage = false
         gameOver = false
-    }
-    
-    func resetGame() {
-        showPlayerSetup = true
-        gameOver = false
-        message = ""
-        showMessage = false
-        playerNames = Array(repeating: "", count: 10)
     }
     
     func drawRandomCard() {
