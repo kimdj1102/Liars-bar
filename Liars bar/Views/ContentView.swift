@@ -11,31 +11,49 @@ struct ContentView: View {
     @State private var playerNames: [String] = Array(repeating: "", count: 10)
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                Text("Liar's bar")
-                    .font(.title)
-                    .padding(.top)
-                
-                if showPlayerSetup {
-                    GameSetupView(
-                        numberOfRevolvers: $numberOfRevolvers,
-                        playerNames: $playerNames,
-                        onStartGame: startGame
-                    )
-                } else {
-                    gameView
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 20) {
+                    Divider()
+                    if showPlayerSetup {
+                        GameSetupView(
+                            numberOfRevolvers: $numberOfRevolvers,
+                            playerNames: $playerNames,
+                            onStartGame: startGame
+                        )
+                    } else {
+                        gameView
+                    }
                 }
             }
-        }
-        .background(Color.gray.opacity(0.1))
-        .onAppear {
-            resetGame()
+            .background(Color.gray.opacity(0.1))
+            .navigationBarTitle("Liar's bar", displayMode: .inline)
+            .navigationBarItems(
+                leading:
+                    Button(action: {
+                        resetGame()
+                    }) {
+                        Text("새 게임")
+                            .font(.title3)
+                    }
+                    .disabled(showPlayerSetup),
+                trailing:
+                    Button(action: {
+                        // 설정 액션 추가
+                    }) {
+                        Text("도움말")
+                            .font(.title3)
+                    }
+            )
+            .onAppear {
+                resetGame()
+            }
+            
         }
     }
     
     var gameView: some View {
-        VStack(spacing: 5) {
+        VStack(spacing: 10) {
             CardSectionView(
                 displayCard: displayCard,
                 onDrawCard: drawRandomCard,
