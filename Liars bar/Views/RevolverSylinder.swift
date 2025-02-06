@@ -95,7 +95,7 @@ struct RevolverCylinder: View {
                     .frame(width: 130, height: 130)
             )
             
-            Text("\(revolverState.remainingChambers)/6")
+            Text("\(revolverState.remainingChambers)/6개 방 남음")
                 .font(.subheadline)
             Text("사망 확률: \(String(format: "%.2f", revolverState.probability))%")
                 .font(.subheadline)

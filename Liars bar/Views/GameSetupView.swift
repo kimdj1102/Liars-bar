@@ -13,11 +13,11 @@ struct GameSetupView: View {
     let onStartGame: () -> Void
     
     var body: some View {
-        VStack(spacing: 20) {
-            VStack(alignment: .leading) {
+        VStack() {
+            VStack(alignment: .center, spacing: 5) {
                 Text("플레이어 수")
                     .font(.headline)
-                
+
                 HStack {
                     Button(action: { if numberOfRevolvers > 1 { numberOfRevolvers -= 1 } }) {
                         Image(systemName: "minus.circle.fill")
@@ -36,9 +36,11 @@ struct GameSetupView: View {
                     }
                 }
             }
-            .padding()
+            .padding(.horizontal)
             
             VStack(alignment: .leading, spacing: 15) {
+                Divider()
+                
                 Text("플레이어 이름")
                     .font(.headline)
                 
